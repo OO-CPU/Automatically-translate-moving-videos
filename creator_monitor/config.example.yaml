@@ -1,11 +1,14 @@
 defaults:
   check_interval_minutes: 30
+  scan_latest_items: 12
   action: notify
   max_new_items_per_check: 3
+  proxy: http://127.0.0.1:7897
 
 creators:
   - id: example-youtube-channel
     platform: youtube
+    name: 示例频道
     url: https://www.youtube.com/@example/videos
     enabled: false
     action: notify

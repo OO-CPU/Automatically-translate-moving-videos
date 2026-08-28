@@ -18,4 +18,9 @@ nohup "$PYTHON_BIN" "$REPO_ROOT/pipeline/auto_import_watch.py" --watch-dir "$YOU
 # 下载监控页：http://localhost:7799（随页面服务一起启停）
 pkill -f "downloads_dashboard.py" 2>/dev/null
 nohup "$PYTHON_BIN" "$REPO_ROOT/pipeline/downloads_dashboard.py" >> /tmp/downloads-dashboard.log 2>&1 &
+# 博主新视频监控：只有存在本地 config.yaml 时才启动，首次运行只建立基线。
+pkill -f "creator_monitor/monitor.py" 2>/dev/null
+if [ -f "$REPO_ROOT/creator_monitor/config.yaml" ]; then
+  nohup "$PYTHON_BIN" "$REPO_ROOT/creator_monitor/monitor.py" >> /tmp/creator-monitor.log 2>&1 &
+fi
 exec "$STREAMLIT_BIN" run st.py --server.port 8501 --server.headless true --browser.gatherUsageStats false >> /tmp/videolingo-streamlit.log 2>&1

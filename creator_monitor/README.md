@@ -12,4 +12,10 @@
 4. YouTube 请求必须使用项目代理，并设置合理检查间隔和退避，遇到风控立即停止。
 5. 下载仍通过现有 Xiaoer daemon，避免出现两套下载和防重逻辑。
 
-当前尚未配置目标博主，因此不会启动监控任务。
+把 `config.example.yaml` 复制为不入库的 `config.yaml`，填写频道后先执行一次建立基线：
+
+```bash
+videolingo/.venv/bin/python creator_monitor/monitor.py --once
+```
+
+`action: notify` 只发送 macOS 通知；`action: download` 会把新增作品 URL 交给 Xiaoer daemon。当前尚未配置目标博主，因此不会启动监控任务。
