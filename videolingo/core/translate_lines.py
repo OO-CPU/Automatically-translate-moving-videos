@@ -7,14 +7,24 @@ from core.utils import *
 console = Console()
 
 def valid_translate_result(result: dict, required_keys: list, required_sub_keys: list):
+    if not isinstance(result, dict):
+        return {
+            "status": "error",
+            "message": f"Expected a JSON object, got {type(result).__name__}",
+        }
+
     # Check for the required key
     if not all(key in result for key in required_keys):
-        return {"status": "error", "message": f"Missing required key(s): {', '.join(set(required_keys) - set(result.keys()))}"}
+        missing = sorted(set(required_keys) - set(result.keys()))
+        return {"status": "error", "message": f"Missing required key(s): {', '.join(missing)}"}
     
     # Check for required sub-keys in all items
-    for key in result:
+    for key in required_keys:
+        if not isinstance(result[key], dict):
+            return {"status": "error", "message": f"Item {key} must be a JSON object"}
         if not all(sub_key in result[key] for sub_key in required_sub_keys):
-            return {"status": "error", "message": f"Missing required sub-key(s) in item {key}: {', '.join(set(required_sub_keys) - set(result[key].keys()))}"}
+            missing = sorted(set(required_sub_keys) - set(result[key].keys()))
+            return {"status": "error", "message": f"Missing required sub-key(s) in item {key}: {', '.join(missing)}"}
 
     return {"status": "success", "message": "Translation completed"}
 

@@ -52,10 +52,14 @@ def get_summary():
     
     def valid_summary(response_data):
         required_keys = {'src', 'tgt', 'note'}
+        if not isinstance(response_data, dict):
+            return {"status": "error", "message": f"Expected a JSON object, got {type(response_data).__name__}"}
         if 'terms' not in response_data:
             return {"status": "error", "message": "Invalid response format"}
+        if not isinstance(response_data['terms'], list):
+            return {"status": "error", "message": "terms must be a JSON array"}
         for term in response_data['terms']:
-            if not all(key in term for key in required_keys):
+            if not isinstance(term, dict) or not all(key in term for key in required_keys):
                 return {"status": "error", "message": "Invalid response format"}   
         return {"status": "success", "message": "Summary completed"}
 

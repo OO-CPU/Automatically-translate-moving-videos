@@ -59,10 +59,26 @@ cp "$ROOT/deploy/com.videolingo.streamlit.plist" "$VIDEOLINGO_PLIST"
 /usr/libexec/PlistBuddy -c "Set :EnvironmentVariables:VIDEOLAB_DOWNLOADS $RUNTIME/data/生肉视频" "$PLIST"
 
 LAUNCH_DOMAIN="gui/$(id -u)"
-launchctl bootout "$LAUNCH_DOMAIN/com.videolingo.streamlit" 2>/dev/null || true
-launchctl bootstrap "$LAUNCH_DOMAIN" "$VIDEOLINGO_PLIST"
-launchctl bootout "$LAUNCH_DOMAIN/com.xiaoer.videolab" 2>/dev/null || true
-launchctl bootstrap "$LAUNCH_DOMAIN" "$PLIST"
+
+restart_launch_agent() {
+  label="$1"
+  plist_path="$2"
+  launchctl bootout "$LAUNCH_DOMAIN/$label" 2>/dev/null || true
+  # macOS 偶尔需要一点时间完成 bootout，否则立即 bootstrap 会返回 I/O error。
+  attempt=1
+  while [ "$attempt" -le 3 ]; do
+    sleep 1
+    if launchctl bootstrap "$LAUNCH_DOMAIN" "$plist_path"; then
+      return 0
+    fi
+    attempt=$((attempt + 1))
+  done
+  echo "无法启动 $label" >&2
+  return 1
+}
+
+restart_launch_agent com.videolingo.streamlit "$VIDEOLINGO_PLIST"
+restart_launch_agent com.xiaoer.videolab "$PLIST"
 
 for _ in {1..12}; do
   if curl -fsS http://127.0.0.1:7788/health >/dev/null 2>&1 \
