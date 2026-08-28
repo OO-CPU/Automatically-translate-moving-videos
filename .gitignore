@@ -4,6 +4,7 @@ __pycache__/
 *.log
 
 # 本地运行环境与密钥
+.private/
 videolingo/.venv
 videolingo/config.yaml
 videolingo/_model_cache

@@ -1,9 +1,10 @@
 [Unit]
-Description=Run YouTube channel monitor every day at 08:00 China time
+Description=Run YouTube channel monitor every morning in China time
 
 [Timer]
-OnCalendar=*-*-* 00:00:00 UTC
+OnCalendar=*-*-* 00:45:00 UTC
 Persistent=true
+RandomizedDelaySec=5m
 Unit=youtube-channel-monitor.service
 
 [Install]

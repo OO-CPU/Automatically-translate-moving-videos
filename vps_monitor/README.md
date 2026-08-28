@@ -4,7 +4,7 @@
 
 ## 工作方式
 
-1. 每天北京时间 08:00 运行。
+1. 每天北京时间 08:45 左右运行，最多随机延迟 5 分钟，以避开 VPS 现有的每日备份窗口。
 2. 优先调用官方 YouTube Data API；没有 API Key 时使用频道 RSS。
 3. 第一次运行只记录当前视频作为基线，不发送历史视频提醒。
 4. 以后发现新视频时发送邮件，并把视频 ID 写入本地状态文件防止重复提醒。
@@ -25,6 +25,8 @@ cp config.env.example config.env
 nano config.env
 sudo ./install.sh ./config.env
 ```
+
+正式部署前应先按 [`../docs/VPS监控部署方案.md`](../docs/VPS监控部署方案.md) 完成 SSH 主机指纹核对、资源检查和配置准备。
 
 首次运行并建立基线：
 

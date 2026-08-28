@@ -44,6 +44,7 @@ data/熟肉视频 + 发布文案
 脚本会先检查是否有活动下载；检测到下载中任务时会拒绝重启。
 
 详细交接信息见 [`pipeline/docs/交接文档.md`](pipeline/docs/交接文档.md)。
+当前项目状态见 [`PROJECT_STATUS.md`](PROJECT_STATUS.md)，VPS 邮件监控的部署方案见 [`docs/VPS监控部署方案.md`](docs/VPS监控部署方案.md)。
 
 ## 敏感数据
 

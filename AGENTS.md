@@ -1,6 +1,7 @@
 # AGENTS.md — YouTube 视频自动搬运项目
 
-接手任务前阅读 `README.md` 与 `pipeline/docs/交接文档.md`。
+接手任务前阅读 `README.md`、`PROJECT_STATUS.md` 与 `pipeline/docs/交接文档.md`。
+涉及 VPS 监控时还要阅读 `docs/VPS监控部署方案.md`；服务器地址、SSH 主机信息和邮箱凭据只允许保存在已忽略的 `.private/` 目录，不得提交到 Git。
 
 ## 安全铁律
 
