@@ -1,0 +1,23 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.log
+
+# 本地运行环境与密钥
+videolingo/.venv
+videolingo/config.yaml
+videolingo/_model_cache
+videolingo/output
+videolingo/history
+videolingo/.oneclick_dl.lock
+
+# 视频、运行状态和下载临时文件
+data
+*.part
+*.crdownload
+*.download
+*.ytdl
+
+# 本地编辑器
+.idea/
+.vscode/

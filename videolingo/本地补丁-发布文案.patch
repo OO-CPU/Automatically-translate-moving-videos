@@ -1,0 +1,285 @@
+diff --git a/core/_1_ytdlp.py b/core/_1_ytdlp.py
+index c051102..804db47 100644
+--- a/core/_1_ytdlp.py
++++ b/core/_1_ytdlp.py
+@@ -28,24 +28,61 @@ def update_ytdlp():
+     from yt_dlp import YoutubeDL
+     return YoutubeDL
+ 
++def _pick_cap_key(formats):
++    """Choose the axis to cap by the video orientation.
++
++    yt-dlp's ``height`` filter only caps the vertical dimension, so portrait
++    videos (e.g. 1080x1920) have height 1920 and silently fall back to a
++    low-quality 608x1080 rendition. For portrait videos we cap ``width``
++    instead, so "1080" means the longer side never exceeds 1080px in either
++    orientation.
++    """
++    dims = [
++        (f.get("width") or 0, f.get("height") or 0)
++        for f in formats
++        if f.get("vcodec") not in (None, "none")
++    ]
++    dims = [d for d in dims if d[0] > 0 and d[1] > 0]
++    if not dims:
++        return "height"
++    max_w = max(w for w, _ in dims)
++    max_h = max(h for _, h in dims)
++    return "width" if max_w < max_h else "height"
++
++
++def _format_selector(cap_key, resolution):
++    if resolution == "best":
++        return "bestvideo+bestaudio/best"
++    return f"bestvideo[{cap_key}<={resolution}]+bestaudio/best[{cap_key}<={resolution}]"
++
++
+ def download_video_ytdlp(url, save_path='output', resolution='1080'):
+     os.makedirs(save_path, exist_ok=True)
++    # Read Youtube Cookie File
++    cookies_path = load_key("youtube.cookies_path")
++    probe_opts = {"quiet": True, "noplaylist": True}
++    if os.path.exists(cookies_path):
++        probe_opts["cookiefile"] = str(cookies_path)
++
++    # Get YoutubeDL class after updating
++    YoutubeDL = update_ytdlp()
++
++    # Probe available formats to pick the correct axis for vertical videos
++    with YoutubeDL(probe_opts) as probe_ydl:
++        info = probe_ydl.extract_info(url, download=False)
++    cap_key = _pick_cap_key(info.get("formats", []))
++
+     ydl_opts = {
+-        'format': 'bestvideo+bestaudio/best' if resolution == 'best' else f'bestvideo[height<={resolution}]+bestaudio/best[height<={resolution}]',
++        'format': _format_selector(cap_key, resolution),
+         'outtmpl': f'{save_path}/%(title)s.%(ext)s',
+         'noplaylist': True,
+         'writethumbnail': True,
+         'merge_output_format': 'mp4',
+         'postprocessors': [{'key': 'FFmpegThumbnailsConvertor', 'format': 'jpg'}],
+     }
+-
+-    # Read Youtube Cookie File
+-    cookies_path = load_key("youtube.cookies_path")
+     if os.path.exists(cookies_path):
+         ydl_opts["cookiefile"] = str(cookies_path)
+ 
+-    # Get YoutubeDL class after updating
+-    YoutubeDL = update_ytdlp()
+     with YoutubeDL(ydl_opts) as ydl:
+         ydl.download([url])
+     
+diff --git a/core/st_utils/publish_copy_section.py b/core/st_utils/publish_copy_section.py
+new file mode 100644
+index 0000000..d3888f7
+--- /dev/null
++++ b/core/st_utils/publish_copy_section.py
+@@ -0,0 +1,166 @@
++"""
++发布文案生成（手动上传抖音用）。
++
++熟肉视频生成后调用：自动生成中文标题/简介/话题，
++显示在页面并保存为 熟肉视频/<视频名>_发布文案.txt，方便手动上传时复制。
++"""
++import json
++import os
++import re
++
++import streamlit as st
++
++SUB_VIDEO = "output/output_sub.mp4"
++RENDU_DIR = os.path.expanduser("~/视频自动搬运发布/熟肉视频")
++
++
++def _clean_title(name):
++    name = os.path.splitext(name)[0]              # 去掉扩展名
++    name = re.sub(r"^(YouTube|youtube)[_-]?", "", name)
++    name = re.sub(r"_\d{8}$", "", name)          # 去掉日期后缀 _20260804
++    name = re.sub(r"_字幕$", "", name)
++    name = re.sub(r"[-_]+", " ", name).strip()
++    return name[:55]
++
++
++def _default_title():
++    try:
++        from core._1_ytdlp import find_media_file
++        media_path, _ = find_media_file()
++        return _clean_title(os.path.basename(media_path))
++    except Exception:
++        return _clean_title(os.path.basename(SUB_VIDEO))
++
++
++def _summary():
++    """从 gpt_log/summary.json 提取 (中文简介, 话题列表)。"""
++    theme, terms = "", []
++    try:
++        with open("output/gpt_log/summary.json", encoding="utf-8") as f:
++            data = json.load(f)
++        for item in data:
++            resp = item.get("resp") or {}
++            if not theme and resp.get("theme"):
++                theme = str(resp["theme"]).strip()
++            for term in resp.get("terms", []):
++                tg = (term.get("tgt") or "").strip()
++                if tg and tg not in terms and not re.search(r"[（）()]", tg):
++                    terms.append(tg)
++    except Exception:
++        pass
++    return theme, terms[:4]
++
++
++def _gen_meta():
++    """生成中文标题与话题；优先复用已生成的 douyin_meta，失败返回 (None, None)。"""
++    try:
++        with open("output/gpt_log/douyin_meta.json", encoding="utf-8") as f:
++            data = json.load(f)
++        for item in data:
++            resp = item.get("resp") or {}
++            title = str(resp.get("title", "")).strip()
++            tags = [str(x).strip() for x in resp.get("tags", []) if str(x).strip()]
++            if title:
++                return title[:55], tags[:5]
++    except Exception:
++        pass
++
++    theme, terms = _summary()
++    if not theme:
++        return None, None
++    prompt = (
++        "你是抖音短视频运营专家。请根据视频内容摘要和术语，生成发布文案：\n"
++        "1. 中文标题：15-30 字，口语化、吸引人，不要引号、书名号、#话题、emoji；\n"
++        "2. 3-5 个与视频内容相关的中文话题词（不要包含“熟肉”“搬运”）。\n"
++        f"视频摘要：{theme}\n"
++        f"相关术语：{', '.join(terms) if terms else '无'}\n"
++        '只输出 JSON：{"title": "标题", "tags": ["话题1", "话题2"]}'
++    )
++    try:
++        from core.utils.ask_gpt import ask_gpt
++        resp = ask_gpt(prompt, resp_type="json", log_title="publish_copy_meta")
++        title = str(resp.get("title", "")).strip().strip('"')
++        tags = [str(x).strip() for x in resp.get("tags", []) if str(x).strip()]
++        if title:
++            return title[:55], tags[:5]
++    except Exception:
++        pass
++    return None, None
++
++
++def _video_key():
++    try:
++        from core._1_ytdlp import find_media_file
++        media_path, _ = find_media_file()
++        return os.path.basename(media_path)
++    except Exception:
++        return os.path.basename(SUB_VIDEO)
++
++
++def _rendu_path(video_key):
++    """成品路径，与 _7_sub_into_vid.py 的命名保持一致。"""
++    stem = os.path.splitext(video_key)[0]
++    return os.path.join(RENDU_DIR, f"{stem}_字幕.mp4")
++
++
++def _save_copy_file(video_key, title, desc, tags):
++    """把文案保存为 熟肉视频/<视频名>_发布文案.txt。"""
++    txt_path = os.path.splitext(_rendu_path(video_key))[0] + "_发布文案.txt"
++    tag_line = " ".join(f"#{t.strip()}" for t in tags if t and t.strip())
++    content = f"标题：{title}\n简介：{desc}\n话题：{tag_line}\n"
++    try:
++        os.makedirs(RENDU_DIR, exist_ok=True)
++        with open(txt_path, "w", encoding="utf-8") as f:
++            f.write(content)
++        return txt_path
++    except Exception as exc:
++        st.warning(f"发布文案保存失败: {exc}")
++        return None
++
++
++def publish_copy_section():
++    """在字幕视频生成后调用：展示并保存标题/简介/话题（手动上传用）。"""
++    if not os.path.exists(SUB_VIDEO):
++        return
++    st.subheader("📝 发布文案（手动上传抖音用）")
++
++    video_key = _video_key()
++    meta = st.session_state.get("_copy_meta")
++    if not (meta and meta.get("video") == video_key):
++        theme, terms = _summary()
++        auto_title, auto_tags = _gen_meta()
++        meta = {
++            "video": video_key,
++            "title": auto_title or _default_title(),
++            "desc": theme or "",
++            "tags": auto_tags or terms,
++        }
++        st.session_state["_copy_meta"] = meta
++        st.session_state["_copy_saved_path"] = _save_copy_file(
++            video_key, meta["title"], meta["desc"], meta["tags"]
++        )
++
++    with st.container(border=True):
++        st.caption("已根据视频内容自动生成，可修改后手动复制；点「保存」会更新文案文件")
++        title = st.text_input("标题", value=meta["title"], key="_copy_title")
++        desc = st.text_area("简介", value=meta["desc"], key="_copy_desc", height=120)
++        tags_default = ", ".join(meta["tags"] + ["熟肉", "搬运"]) if meta["tags"] else "熟肉,搬运"
++        tags = st.text_input("话题（逗号分隔）", value=tags_default, key="_copy_tags")
++        col1, col2 = st.columns([1, 4])
++        with col1:
++            if st.button("🔄 重新生成", key="_copy_regen", use_container_width=True):
++                for k in ("_copy_meta", "_copy_title", "_copy_desc", "_copy_tags", "_copy_saved_path"):
++                    st.session_state.pop(k, None)
++                st.rerun()
++        with col2:
++            if st.button("💾 保存为发布文案文件", key="_copy_save", use_container_width=True):
++                st.session_state["_copy_saved_path"] = _save_copy_file(
++                    video_key,
++                    title.strip(),
++                    desc.strip(),
++                    [t.strip() for t in tags.split(",") if t.strip()],
++                )
++                st.rerun()
++        saved_path = st.session_state.get("_copy_saved_path")
++        if saved_path and os.path.exists(saved_path):
++            st.caption(f"✅ 文案文件：{saved_path}")
+diff --git a/core/st_utils/download_video_section.py b/core/st_utils/download_video_section.py
+index c31ac90..c23bdba 100644
+--- a/core/st_utils/download_video_section.py
++++ b/core/st_utils/download_video_section.py
+@@ -109,6 +109,7 @@ def download_video_section():
+             if url:
+                 with st.spinner(t("Downloading video...")):
+                     download_video_ytdlp(url, resolution=res)
++                st.session_state["_auto_start_text"] = True
+                 st.rerun()
+ 
+         _inject_file_uploader_i18n()
+diff --git a/st.py b/st.py
+index 992534c..e9cc9e8 100644
+--- a/st.py
++++ b/st.py
+@@ -249,6 +249,15 @@ def text_processing_section():
+             and (audio_only or os.path.exists(SUB_VIDEO))
+         )
+ 
++        if (
++            st.session_state.pop("_auto_start_text", False)
++            and runner.state == "idle"
++            and not text_done
++        ):
++            _clear_path(_TEXT_DONE_MARKER)
++            runner.start(_get_text_steps())
++            st.rerun()
++
+         if not text_done:
+             if runner.is_active:
+                 _task_control_panel("_text_runner")
+@@ -394,6 +403,8 @@ def main():
+         text_done = text_processing_section()
+         from core._1_ytdlp import is_audio_only_input
+         if text_done and not is_audio_only_input():
++            from core.st_utils.publish_copy_section import publish_copy_section
++            publish_copy_section()
+             audio_processing_section()
+ 
+ 

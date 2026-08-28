@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#7c3aed"/>
+
+  <!-- 左耳（白） -->
+  <ellipse cx="44" cy="50" rx="14" ry="32" fill="#fff"/>
+  <!-- 左内耳（粉） -->
+  <ellipse cx="44" cy="54" rx="6" ry="22" fill="#fbb6ce"/>
+
+  <!-- 右耳（白） -->
+  <ellipse cx="84" cy="50" rx="14" ry="32" fill="#fff"/>
+  <!-- 右内耳（粉） -->
+  <ellipse cx="84" cy="54" rx="6" ry="22" fill="#fbb6ce"/>
+
+  <!-- 下载箭头：竖条 -->
+  <rect x="56" y="74" width="16" height="22" fill="#fff"/>
+  <!-- 下载箭头：三角 -->
+  <polygon points="38,94 90,94 64,120" fill="#fff"/>
+</svg>

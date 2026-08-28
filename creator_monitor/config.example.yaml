@@ -1,0 +1,11 @@
+defaults:
+  check_interval_minutes: 30
+  action: notify
+  max_new_items_per_check: 3
+
+creators:
+  - id: example-youtube-channel
+    platform: youtube
+    url: https://www.youtube.com/@example/videos
+    enabled: false
+    action: notify

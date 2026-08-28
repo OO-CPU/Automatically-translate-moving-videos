@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="root">
+    <div class="header">
+      <svg class="logo" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+      <h1>Xiaoer VideoLab</h1>
+      <button id="localeToggle" class="locale-btn">EN</button>
+    </div>
+
+    <div class="toolbar">
+      <span class="toolbar-title" data-i18n="history">History</span>
+      <div class="toolbar-actions">
+        <span id="counter" class="counter"></span>
+        <button id="clearAllBtn" class="locale-btn" data-i18n="clearAll" hidden>Clear</button>
+      </div>
+    </div>
+
+    <div id="historyList" class="history-list"></div>
+
+    <div id="emptyState" class="empty-state hidden">
+      <div class="empty-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+      </div>
+      <p class="empty-title" data-i18n="emptyTitle">No downloads yet</p>
+      <p class="empty-hint" data-i18n="emptyHint">Click below to download a video</p>
+    </div>
+
+    <div id="daemonOffline" class="daemon-offline hidden">
+      <p class="offline-title" data-i18n="offlineTitle">Daemon not running</p>
+      <p class="offline-hint" data-i18n="offlineHint">Reopen this window; if it persists, restart the service</p>
+    </div>
+
+    <div class="footer">
+      <div id="statusMsg" class="status-msg hidden"></div>
+      <button id="downloadBtn" class="download-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span data-i18n="download">Download</span>
+      </button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

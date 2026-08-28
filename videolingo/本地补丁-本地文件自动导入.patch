@@ -1,0 +1,27 @@
+diff --git a/core/st_utils/download_video_section.py b/core/st_utils/download_video_section.py
+index 15e404d..5e4812c 100644
+--- a/core/st_utils/download_video_section.py
++++ b/core/st_utils/download_video_section.py
+@@ -129,6 +129,9 @@ def download_video_section():
+     st.header(t("a. Download or Upload Video"))
+     with st.container(border=True):
+         auto_url = _auto_start_url()
++        auto_start = st.query_params.get("auto_process") == "1"
++        if auto_start:
++            st.query_params.clear()
+         if auto_url:
+             st.query_params.clear()
+             if _processing_busy():
+@@ -151,6 +154,12 @@ def download_video_section():
+                 st.rerun()
+         try:
+             media_file, media_type = find_media_file()
++            if auto_start:
++                if _processing_busy():
++                    st.info("⚠️ 已有任务正在处理中，请稍候；完成后再刷新页面继续。")
++                else:
++                    st.session_state["_auto_start_text"] = True
++                    st.rerun()
+             if media_type == "video":
+                 st.video(media_file)
+             else:

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint & syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python compiles
+        run: python3 -m py_compile daemon/server.py
+
+      - name: Shell scripts parse
+        run: |
+          bash -n scripts/install.sh
+          bash -n scripts/uninstall.sh
+
+      - name: Extension JS is valid
+        run: node --check extension/background.js
+
+      - name: manifest.json is valid JSON
+        run: python3 -c "import json; json.load(open('extension/manifest.json'))"
+
+  smoke:
+    name: Daemon smoke test (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot daemon and probe endpoints
+        run: |
+          set -euo pipefail
+          VIDEOLAB_PORT=7799 VIDEOLAB_DOWNLOADS="$RUNNER_TEMP/dl" python3 daemon/server.py &
+          SRV=$!
+          # wait for boot (curl retries until it connects)
+          curl -s --retry 20 --retry-delay 1 --retry-connrefused http://127.0.0.1:7799/health >/dev/null
+
+          code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+
+          h=$(code http://127.0.0.1:7799/health)
+          [ "$h" = 200 ] || { echo "health expected 200, got $h"; kill $SRV; exit 1; }
+
+          bad=$(code -X POST http://127.0.0.1:7799/download -H 'Content-Type: application/json' -d '{}')
+          [ "$bad" = 400 ] || { echo "bad request expected 400, got $bad"; kill $SRV; exit 1; }
+
+          evil=$(code -X POST http://127.0.0.1:7799/download -H 'Content-Type: application/json' -H 'Origin: https://evil.com' -d '{"url":"https://example.com/x"}')
+          [ "$evil" = 403 ] || { echo "web origin expected 403, got $evil"; kill $SRV; exit 1; }
+
+          ok=$(code -X POST http://127.0.0.1:7799/download -H 'Content-Type: application/json' -H 'Origin: chrome-extension://abc' -d '{"url":"https://example.com/x"}')
+          [ "$ok" = 202 ] || { echo "extension origin expected 202, got $ok"; kill $SRV; exit 1; }
+
+          echo "All endpoint checks passed (200 / 400 / 403 / 202)."
+          kill $SRV 2>/dev/null || true

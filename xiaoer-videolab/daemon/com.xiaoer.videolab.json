@@ -1,0 +1,7 @@
+{
+  "name": "com.xiaoer.videolab",
+  "description": "Start/stop the Xiaoer VideoLab download daemon",
+  "path": "__HOST_PATH__",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://objlebheicdclpopinghmbnfdilkmhpd/"]
+}
