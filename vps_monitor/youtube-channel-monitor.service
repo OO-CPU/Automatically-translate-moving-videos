@@ -1,0 +1,16 @@
+[Unit]
+Description=Check a YouTube channel and send email for new videos
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+StateDirectory=youtube-channel-monitor
+EnvironmentFile=/etc/youtube-channel-monitor.env
+Environment=STATE_FILE=/var/lib/youtube-channel-monitor/state.json
+ExecStart=/usr/bin/python3 /opt/youtube-channel-monitor/youtube_email_monitor.py
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict

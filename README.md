@@ -5,7 +5,8 @@
 - `pipeline/`：下载监控、视频自动导入与流程编排。
 - `videolingo/`：语音识别、自动翻译、字幕烧录、片尾广告裁剪、标题和发布文案生成。
 - `xiaoer-videolab/`：Chrome 下载扩展和本地下载 daemon。
-- `creator_monitor/`：博主新视频自动检测的扩展位，目前只包含配置与设计说明，尚未启用轮询。
+- `creator_monitor/`：本机使用的博主新视频检测模块，配置目标前不会启动轮询。
+- `vps_monitor/`：小容量 Linux VPS 使用的每日 YouTube 新视频邮件提醒服务。
 - `legacy/`：已移除的抖音自动发布模块备份，仅供参考，不会运行。
 - `data/`：视频与运行状态。本机迁移阶段通过符号链接复用旧数据，不纳入 Git。
 

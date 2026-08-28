@@ -14,6 +14,7 @@ videolingo/.oneclick_dl.lock
 # 视频、运行状态和下载临时文件
 data
 creator_monitor/config.yaml
+vps_monitor/config.env
 *.part
 *.crdownload
 *.download
