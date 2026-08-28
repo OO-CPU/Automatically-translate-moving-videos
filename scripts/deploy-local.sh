@@ -28,6 +28,7 @@ rsync -a --delete --exclude='__pycache__' --exclude='*.pyc' \
   "$ROOT/xiaoer-videolab/" "$RUNTIME/xiaoer-videolab/"
 rsync -a --delete "$ROOT/creator_monitor/" "$RUNTIME/creator_monitor/"
 rsync -a --delete "$ROOT/legacy/" "$RUNTIME/legacy/"
+rsync -a --delete "$ROOT/deploy/" "$RUNTIME/deploy/"
 cp "$ROOT/README.md" "$ROOT/AGENTS.md" "$RUNTIME/"
 
 ln -sfn "$HOME/视频自动搬运发布" "$RUNTIME/data"
@@ -51,13 +52,15 @@ if [[ "$DOWNLOADS" == *'"status":"downloading"'* ]]; then
 fi
 
 PLIST="$HOME/Library/LaunchAgents/com.xiaoer.videolab.plist"
+VIDEOLINGO_PLIST="$HOME/Library/LaunchAgents/com.videolingo.streamlit.plist"
 cp "$PLIST" "$PLIST.pre-youtube-repost-runtime.bak"
+cp "$ROOT/deploy/com.videolingo.streamlit.plist" "$VIDEOLINGO_PLIST"
 /usr/libexec/PlistBuddy -c "Set :ProgramArguments:1 $RUNTIME/xiaoer-videolab/daemon/server.py" "$PLIST"
 /usr/libexec/PlistBuddy -c "Set :EnvironmentVariables:VIDEOLAB_DOWNLOADS $RUNTIME/data/生肉视频" "$PLIST"
 
-launchctl remove com.videolingo.streamlit 2>/dev/null || true
-launchctl submit -l com.videolingo.streamlit -- "$RUNTIME/videolingo/start_detached.sh"
 LAUNCH_DOMAIN="gui/$(id -u)"
+launchctl bootout "$LAUNCH_DOMAIN/com.videolingo.streamlit" 2>/dev/null || true
+launchctl bootstrap "$LAUNCH_DOMAIN" "$VIDEOLINGO_PLIST"
 launchctl bootout "$LAUNCH_DOMAIN/com.xiaoer.videolab" 2>/dev/null || true
 launchctl bootstrap "$LAUNCH_DOMAIN" "$PLIST"
 

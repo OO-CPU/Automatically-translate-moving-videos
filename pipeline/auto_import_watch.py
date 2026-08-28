@@ -202,11 +202,16 @@ def main():
         for src in files:
             stt = src.stat()
             key = f"{src.name}:{stt.st_size}:{int(stt.st_mtime)}"
-            if state.get(key):
+            # pending 表示文件已经下载完成，只是当时 output/ 正忙。
+            # 服务重启后仍应继续处理，不能把它误当成历史文件永久跳过。
+            if state.get(key) not in (None, "pending"):
                 continue
             if not file_stable(src):
                 continue
             if output_busy():
+                if state.get(key) != "pending":
+                    state[key] = "pending"
+                    save_state(state)
                 log("⏳ output/ 里还有未清理的旧视频，等待中…（完成后在页面点「Delete and Reselect」清理）")
                 break
             try:
