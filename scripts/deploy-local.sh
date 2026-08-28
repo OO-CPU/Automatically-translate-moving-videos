@@ -57,8 +57,9 @@ cp "$PLIST" "$PLIST.pre-youtube-repost-runtime.bak"
 
 launchctl remove com.videolingo.streamlit 2>/dev/null || true
 launchctl submit -l com.videolingo.streamlit -- "$RUNTIME/videolingo/start_detached.sh"
-launchctl remove com.xiaoer.videolab 2>/dev/null || true
-launchctl load "$PLIST"
+LAUNCH_DOMAIN="gui/$(id -u)"
+launchctl bootout "$LAUNCH_DOMAIN/com.xiaoer.videolab" 2>/dev/null || true
+launchctl bootstrap "$LAUNCH_DOMAIN" "$PLIST"
 
 for _ in {1..12}; do
   if curl -fsS http://127.0.0.1:7788/health >/dev/null 2>&1 \
