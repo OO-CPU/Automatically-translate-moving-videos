@@ -281,9 +281,6 @@ def download(url: str, filename: str = "") -> None:
         "--no-playlist",
         "--playlist-items", "1",   # if the URL is a profile/playlist, take just one — don't churn
         "--socket-timeout", "30",  # don't hang forever on a stalled connection
-        "--retries", "10",        # recover from transient CDN/proxy failures
-        "--fragment-retries", "10",
-        "--retry-sleep", "2",
         "--no-mtime",
     ]
     if platform in _PROXY_PLATFORMS:

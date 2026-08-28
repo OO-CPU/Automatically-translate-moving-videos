@@ -32,6 +32,7 @@ data/熟肉视频 + 发布文案
 - Xiaoer daemon：`http://127.0.0.1:7788`
 - 下载监控页：`http://127.0.0.1:7799`
 - VideoLingo：`http://127.0.0.1:8501`
+- YouTube 底层下载器：Homebrew `yt-dlp`（本机当前版本 `2026.08.19`）
 
 由于 macOS 不允许后台 `launchd` 直接读取 `Documents/ChatGPT`，本目录是维护源，服务从 `~/youtube-repost-runtime` 运行。修改后部署并重启：
 
