@@ -37,17 +37,17 @@ GitHub 仓库：`OO-CPU/Automatically-translate-moving-videos`，默认分支 `m
 
 ## VPS 部署状态
 
-当前状态：**未部署**。
+当前状态：**配置准备中，尚未部署**。
 
-已从另一个 VPS 运维项目核对到服务器具备 systemd、Python、UFW、Fail2ban、SSH 密钥登录及每日备份，满足轻量部署条件。但记录显示 SSH 主机密钥曾发生变化，正式连接前必须先通过服务商网页控制台核对当前指纹。
+已从另一个 VPS 运维项目和一次只读检查确认服务器具备 systemd、Python、UFW、Fail2ban、SSH 密钥登录及每日备份，满足轻量部署条件。用户已确认当前 SSH 主机指纹与服务商控制台一致，可通过 Mac 私钥登录。
+
+已确认监控目标为 TED-Ed，稳定 Channel ID 为 `UCsooa4yRKGN_zEE8iknghZA`。发件和收件地址已确定；YouTube API Key 暂不配置，先使用官方频道 RSS。SMTP 授权码仍需由用户在本机私密配置文件中填写。
 
 服务器地址、SSH 别名、主机指纹和邮箱配置属于私密运维信息，只记录在本机已忽略的 `.private/` 目录，不提交到公开仓库。
 
 ## 部署前仍需确定
 
-- 要监控的 YouTube 频道 URL 或 Channel ID。
-- 发信邮箱服务商、发件地址、SMTP 授权码和收件地址。
-- 是否提供 YouTube Data API Key；不提供也能先使用 RSS。
+- QQ 邮箱 SMTP 授权码，仅填写到本机已忽略的 `vps_monitor/config.env`。
 - 用户明确授权连接 VPS 并执行安装。
 
 ## 维护规则
