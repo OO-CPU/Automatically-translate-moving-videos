@@ -7,6 +7,8 @@ Wants=network-online.target
 Type=oneshot
 DynamicUser=yes
 StateDirectory=youtube-channel-monitor
+StateDirectoryMode=0700
+UMask=0077
 EnvironmentFile=/etc/youtube-channel-monitor.env
 Environment=STATE_FILE=/var/lib/youtube-channel-monitor/state.json
 ExecStart=/usr/bin/python3 /opt/youtube-channel-monitor/youtube_email_monitor.py

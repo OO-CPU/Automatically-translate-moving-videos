@@ -37,18 +37,29 @@ GitHub 仓库：`OO-CPU/Automatically-translate-moving-videos`，默认分支 `m
 
 ## VPS 部署状态
 
-当前状态：**配置准备中，尚未部署**。
+当前状态：**已部署并通过验收**（2026-08-29）。
 
 已从另一个 VPS 运维项目和一次只读检查确认服务器具备 systemd、Python、UFW、Fail2ban、SSH 密钥登录及每日备份，满足轻量部署条件。用户已确认当前 SSH 主机指纹与服务商控制台一致，可通过 Mac 私钥登录。
 
-已确认监控目标为 TED-Ed，稳定 Channel ID 为 `UCsooa4yRKGN_zEE8iknghZA`。发件和收件地址已确定；YouTube API Key 暂不配置，先使用官方频道 RSS。SMTP 授权码仍需由用户在本机私密配置文件中填写。
+监控目标为 TED-Ed，稳定 Channel ID 为 `UCsooa4yRKGN_zEE8iknghZA`。YouTube API Key 暂不配置，使用官方频道 RSS。
+
+部署验收结果：
+
+- QQ SMTP 测试邮件发送成功。
+- 首次运行已建立 TED-Ed 视频基线，没有补发历史视频。
+- 第二次运行正常识别为“没有新视频”。
+- `youtube-channel-monitor.timer` 已启用并处于 active 状态。
+- 每天北京时间约 08:45–08:50 执行。
+- 配置文件权限为 `0600`；systemd 私有状态目录为 `0700`，状态文件为 `0600`。
+- UFW 未新增入站端口，仍只保留服务器原有规则。
+- 远端临时上传目录已删除。
 
 服务器地址、SSH 别名、主机指纹和邮箱配置属于私密运维信息，只记录在本机已忽略的 `.private/` 目录，不提交到公开仓库。
 
-## 部署前仍需确定
+## 后续可选项
 
-- QQ 邮箱 SMTP 授权码，仅填写到本机已忽略的 `vps_monitor/config.env`。
-- 用户明确授权连接 VPS 并执行安装。
+- 如果 RSS 后续出现稳定性问题，再申请并配置 YouTube Data API Key。
+- 可以增加运行失败邮件提醒或独立健康检查，但当前每日监控功能不依赖这些增强项。
 
 ## 维护规则
 
