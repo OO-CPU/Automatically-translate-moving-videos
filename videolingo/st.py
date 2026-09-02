@@ -405,6 +405,9 @@ def main():
         f"<p style='font-size: 20px; color: #808080;'>{welcome_text}</p>",
         unsafe_allow_html=True,
     )
+    archive_notice = st.session_state.pop("_final_archive_notice", None)
+    if archive_notice:
+        st.success(archive_notice)
     # add settings
     with st.sidebar:
         page_setting()

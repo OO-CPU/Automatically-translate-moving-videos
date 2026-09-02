@@ -6,6 +6,9 @@ LLM 分析片尾字幕判断广告起点），点击生成后一次编码输出�
   - output/output_sub.mp4                 （页面预览 / 配音用中间文件）
   - 熟肉视频/<视频名>_字幕.mp4              （唯一最终成品，直接用于上传抖音）
 
+最终视频与发布文案保存成功后，当前 output 项目会自动归档到 history，
+让自动导入 watcher 可以继续处理下一个等待中的视频。
+
 不再像旧版那样先烧字幕、再裁剪、再加标题生成多个文件。
 """
 import json
@@ -393,6 +396,28 @@ def make_final_video(title, trim_at, title_seconds=3.0, position="顶部",
     return True, f"已生成最终版：{target}", target
 
 
+def _archive_current_video(source_path):
+    """归档当前 output，并验证源视频确实进入 history。"""
+    from core.utils.onekeycleanup import cleanup, sanitize_filename
+
+    stem = sanitize_filename(os.path.splitext(os.path.basename(source_path))[0])
+    archive_dir = os.path.join("history", stem)
+    archived_source = os.path.join(
+        archive_dir, sanitize_filename(os.path.basename(source_path))
+    )
+    cleanup()
+    if os.path.exists(source_path) or not os.path.exists(archived_source):
+        return False, "归档验证失败，当前项目没有被完整清理"
+    return True, archive_dir
+
+
+def _clear_final_project_state():
+    """归档后清除当前视频的控件缓存，避免影响下一条视频。"""
+    for key in list(st.session_state):
+        if key.startswith("_final_") or key.startswith("_copy_"):
+            st.session_state.pop(key, None)
+
+
 # ─── 帧预览 ───
 
 
@@ -436,8 +461,8 @@ def finalize_section():
     with st.container(border=True):
         st.caption(
             "先确认标题和裁剪点，点生成后一次完成：裁掉尾部广告、烧录字幕、"
-            "烧录封面标题，直接输出唯一的最终成品；源视频保留在 output/，"
-            "随时可重新生成"
+            "烧录封面标题，直接输出唯一的最终成品；生成成功并保存发布文案后，"
+            "当前视频会自动归档到 history/"
         )
 
         # 1) 标题
@@ -524,9 +549,25 @@ def finalize_section():
                     )
                 if ok:
                     st.session_state["_copy_confirmed_title"] = title.strip()
-                    st.success(msg)
-                    if os.path.exists(OUTPUT_SUB):
-                        st.video(OUTPUT_SUB)
+                    from core.st_utils.publish_copy_section import save_publish_copy_for_final
+
+                    copy_path = save_publish_copy_for_final(title.strip())
+                    if not copy_path:
+                        st.error("❌ 最终视频已生成，但发布文案保存失败；当前视频未归档")
+                    else:
+                        archived, archive_result = _archive_current_video(src)
+                        if not archived:
+                            st.error(
+                                f"❌ 最终视频已生成，但{archive_result}；"
+                                "请保留当前页面并手动检查"
+                            )
+                        else:
+                            _clear_final_project_state()
+                            st.session_state["_final_archive_notice"] = (
+                                f"✅ 最终视频和发布文案已生成，当前视频已自动归档到 "
+                                f"{archive_result}"
+                            )
+                            st.rerun()
                 else:
                     st.error(f"❌ 生成失败：\n{msg}")
 

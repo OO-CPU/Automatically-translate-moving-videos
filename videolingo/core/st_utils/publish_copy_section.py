@@ -123,6 +123,13 @@ def _save_copy_file(video_key, title, desc, tags):
         return None
 
 
+def save_publish_copy_for_final(title):
+    """最终版生成后，在归档 output 前保存对应的发布文案。"""
+    video_key = _video_key()
+    theme, terms = _summary()
+    return _save_copy_file(video_key, title, theme or "", terms)
+
+
 def publish_copy_section():
     """在字幕视频生成后调用：展示并保存标题/简介/话题（手动上传用）。"""
     if not os.path.exists(SUB_VIDEO):
