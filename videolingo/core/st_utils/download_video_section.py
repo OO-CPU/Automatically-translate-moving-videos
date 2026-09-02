@@ -17,6 +17,27 @@ DL_LOCK = os.path.join(
 )
 
 
+def _reset_output_dir(path=OUTPUT_DIR):
+    """清空 output 内容并保留运行目录中的符号链接。"""
+    if os.path.islink(path):
+        target = os.path.realpath(path)
+        os.makedirs(target, exist_ok=True)
+        for name in os.listdir(target):
+            item = os.path.join(target, name)
+            if os.path.islink(item) or os.path.isfile(item):
+                os.remove(item)
+            else:
+                shutil.rmtree(item)
+        return
+
+    if os.path.exists(path):
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+    os.makedirs(path, exist_ok=True)
+
+
 def _auto_start_url():
     """从 URL 参数读取一键下载的链接（?youtube_url=... 或 ?url=...）。"""
     params = st.query_params
@@ -144,9 +165,7 @@ def download_video_section():
             else:
                 try:
                     with st.spinner(t("Downloading video...")):
-                        if os.path.exists(OUTPUT_DIR):
-                            shutil.rmtree(OUTPUT_DIR)
-                        os.makedirs(OUTPUT_DIR, exist_ok=True)
+                        _reset_output_dir()
                         download_video_ytdlp(auto_url, resolution=load_key("ytb_resolution"))
                     st.session_state["_auto_start_text"] = True
                     st.success("✅ 视频下载完成，正在自动识别、翻译、烧录字幕…")
@@ -168,9 +187,7 @@ def download_video_section():
             else:
                 st.audio(media_file)
             if st.button(t("Delete and Reselect"), key="delete_video_button"):
-                os.remove(media_file)
-                if os.path.exists(OUTPUT_DIR):
-                    shutil.rmtree(OUTPUT_DIR)
+                _reset_output_dir()
                 st.session_state.pop("_processed_upload_id", None)
                 sleep(1)
                 st.rerun()
@@ -179,8 +196,7 @@ def download_video_section():
             if "No media file found" not in str(e):
                 st.error(t("Media file detection failed: {error}").replace("{error}", str(e)))
                 if st.button(t("Clear output and reselect"), key="clear_output_button"):
-                    if os.path.exists(OUTPUT_DIR):
-                        shutil.rmtree(OUTPUT_DIR)
+                    _reset_output_dir()
                     st.session_state.pop("_processed_upload_id", None)
                     st.rerun()
                 return False
@@ -220,9 +236,7 @@ def download_video_section():
                 except Exception:
                     st.session_state.pop("_processed_upload_id", None)
 
-            if os.path.exists(OUTPUT_DIR):
-                shutil.rmtree(OUTPUT_DIR)
-            os.makedirs(OUTPUT_DIR, exist_ok=True)
+            _reset_output_dir()
 
             raw_name = uploaded_file.name.replace(' ', '_')
             name, ext = os.path.splitext(raw_name)
